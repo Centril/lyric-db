@@ -12,7 +12,6 @@ pub mod error;
 pub mod metadata;
 pub use self::error::DatabaseError;
 use self::metadata::*;
-
 pub struct Database {
     pub entries: HashMap<Artist, HashMap<Album, Vec<Track>>>,
     file_path: String,
@@ -100,6 +99,7 @@ impl Database {
 
                         tracks.push(track);
                     }
+                    tracks.sort_by(|a, b| a.track.cmp(&b.track));
                     albums.insert(album, tracks);
                 }
                 entries.insert(artist, albums);

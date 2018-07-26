@@ -5,3 +5,6 @@ authors = ["Bunogi <2bunogi@gmail.com>"]
 
 [dependencies]
 treexml = "0.6.2"
+gtk = "0.4.1"
+relm = "0.14.6"
+relm-derive = "0.14.6"
