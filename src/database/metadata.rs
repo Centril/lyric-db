@@ -13,7 +13,7 @@ pub struct Album {
     pub track_count: u8,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Track {
     pub title: String,
     pub lyrics: String,
