@@ -1,0 +1,30 @@
+* TODO Features
+** Server based
+*** Communicate on unix sockets
+*** Open in termal through client
+*** Toggle auto-open lyrics
+** Filesystem based database
+   database.ldb
+
+* Specification
+** Server commands
+*** get
+    Returns the lyrics for the specified search term.
+    "get <track/album/artist> <query>"
+
+*** add
+**** Add lyrics to database
+*** refresh
+    Clears memory and re-imports each entry from the file.
+** ldb file format
+   Each artist is wrapped in `#ARTIST` tags. Every line that begins with a `#`
+   is considered a metadata line. Each album is wrapped in `#ALBUM` tags, and
+   each track is denoted by `#TRACK`. Metadata for tracks follows this pattern:
+
+   #ARTIST <artist name>
+   #ALBUM <album title>
+   #TRACK <track name>
+   ##<track no>
+   <lyrics>
+   #/TRACK
+   #/ALBUM

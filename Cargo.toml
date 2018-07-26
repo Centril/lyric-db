@@ -1,0 +1,7 @@
+[package]
+name = "lyrics"
+version = "0.1.0"
+authors = ["Bunogi <2bunogi@gmail.com>"]
+
+[dependencies]
+treexml = "0.6.2"
