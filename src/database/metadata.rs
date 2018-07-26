@@ -1,13 +1,15 @@
 use std::fmt;
 
-#[derive(Eq, Hash, Debug)]
+#[derive(Debug)]
 pub struct Artist {
     pub name: String,
+    pub albums: Vec<Album>,
 }
 
-#[derive(Eq, Hash, Debug)]
+#[derive(Debug)]
 pub struct Album {
     pub title: String,
+    pub tracks: Vec<Track>,
     pub track_count: u8,
 }
 
@@ -22,6 +24,7 @@ impl Artist {
     pub fn new() -> Artist {
         Artist {
             name: String::new(),
+            albums: Vec::new(),
         }
     }
 }
@@ -31,6 +34,7 @@ impl Album {
         Album {
             title: String::new(),
             track_count: 0,
+            tracks: Vec::new(),
         }
     }
 }
@@ -48,23 +52,5 @@ impl Track {
 impl fmt::Display for Artist {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.name)
-    }
-}
-
-impl PartialEq for Artist {
-    fn eq(&self, other: &Artist) -> bool {
-        self.name == other.name
-    }
-}
-
-impl PartialEq for Album {
-    fn eq(&self, other: &Album) -> bool {
-        self.title == other.title
-    }
-}
-
-impl PartialEq for Track {
-    fn eq(&self, other: &Track) -> bool {
-        self.title == other.title
     }
 }

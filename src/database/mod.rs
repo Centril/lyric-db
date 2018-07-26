@@ -13,7 +13,7 @@ pub mod metadata;
 pub use self::error::DatabaseError;
 use self::metadata::*;
 pub struct Database {
-    pub entries: HashMap<Artist, HashMap<Album, Vec<Track>>>,
+    pub entries: Vec<Artist>,
     file_path: String,
 }
 
@@ -26,7 +26,7 @@ pub struct Database {
 // }
 impl Database {
     pub fn from(path_str: &str) -> Result<Database, DatabaseError> {
-        let mut entries: HashMap<Artist, HashMap<Album, Vec<Track>>> = HashMap::new();
+        let mut entries = Vec::new();
 
         //Open file for reading
         let path = Path::new(path_str);
@@ -61,7 +61,7 @@ impl Database {
                     }
                 }
 
-                let mut albums = HashMap::<Album, Vec<Track>>::new();
+                let mut albums = Vec::new();
                 for album_tag in artist_tag.children {
                     if album_tag.name != "album" {
                         return Err(DatabaseError::InvalidTag(album_tag.name));
@@ -99,10 +99,13 @@ impl Database {
 
                         tracks.push(track);
                     }
+
                     tracks.sort_by(|a, b| a.track.cmp(&b.track));
-                    albums.insert(album, tracks);
+                    album.tracks = tracks;
+                    albums.push(album);
                 }
-                entries.insert(artist, albums);
+                artist.albums = albums;
+                entries.push(artist);
             }
         } else {
             return Err(DatabaseError::Empty);
@@ -114,160 +117,3 @@ impl Database {
         })
     }
 }
-
-// impl Database {
-//     pub fn from(path_str: &str) -> Result<Database, DatabaseError> {
-//         let mut entries: HashMap<Artist, HashMap<Album, Vec<Track>>> = HashMap::new();
-
-//         //Open file for reading
-//         let path = Path::new(path_str);
-//         let file = File::open(path)?;
-//         let file = BufReader::new(file);
-
-//         let mut parser =
-//             EventReader::new_with_config(file, ParserConfig::new().trim_whitespace(true));
-
-//         // Parse file
-//         'root: loop {
-//             match parser.next() {
-//                 Ok(XmlEvent::StartElement {
-//                     name,
-//                     attributes,
-//                     namespace: _,
-//                 }) => {
-//                     let mut artist = Artist {
-//                         name: String::new(),
-//                     };
-//                     for a in attributes {
-//                         if a.name.local_name != "name" {
-//                             panic!("Invalid attribute {}", a.name.local_name);
-//                         }
-//                         artist.name = a.value
-//                     }
-
-//                     let mut albums: HashMap<Album, Vec<Track>> = HashMap::new();
-//                     'albumloop: loop {
-//                         match parser.next() {
-//                             Ok(XmlEvent::StartElement {
-//                                 name,
-//                                 attributes,
-//                                 namespace: _,
-//                             }) => {
-//                                 if name.local_name != "album" {
-//                                     panic!("Invalid tag: {}", name);
-//                                 }
-
-//                                 let mut album = Album {
-//                                     title: String::new(),
-//                                     track_count: 0,
-//                                 };
-//                                 for a in attributes {
-//                                     match a.name.local_name.as_ref() {
-//                                         "title" => album.title = a.value,
-//                                         "tracks" => {
-//                                             album.track_count = a.value.parse::<u8>().unwrap()
-//                                         }
-//                                         _ => panic!("Invalid attribute: {}", a.name.local_name),
-//                                     }
-//                                 }
-
-//                                 let mut tracks = Vec::new();
-//                                 'trackloop: loop {
-//                                     match parser.next() {
-//                                         Ok(XmlEvent::StartElement {
-//                                             name,
-//                                             attributes,
-//                                             namespace: _,
-//                                         }) => {
-//                                             let mut track = Track {
-//                                                 title: String::new(),
-//                                                 lyrics: String::new(),
-//                                                 track: 0,
-//                                             };
-
-//                                             if name.local_name != "track" {
-//                                                 panic!("Not track");
-//                                             }
-
-//                                             for a in attributes {
-//                                                 match a.name.local_name.as_ref() {
-//                                                     "num" => {
-//                                                         track.track = a.value.parse::<u8>().unwrap()
-//                                                     }
-//                                                     "name" => track.title = a.value,
-//                                                     _ => panic!(
-//                                                         "Invalid attribute {}",
-//                                                         a.name.local_name
-//                                                     ),
-//                                                 }
-//                                             }
-
-//                                             loop {
-//                                                 match parser.next() {
-//                                                     Ok(XmlEvent::EndElement { name }) => {
-//                                                         if name.local_name != "track" {
-//                                                             panic!("track error");
-//                                                         }
-//                                                         break;
-//                                                     }
-//                                                     Ok(XmlEvent::Characters(s)) => track.lyrics = s,
-//                                                     Ok(s) => {
-//                                                         panic!("Everything went wrong: {:?}", s)
-//                                                     }
-//                                                     Err(e) => panic!(
-//                                                         "Everything went wrong with error {}",
-//                                                         e
-//                                                     ),
-//                                                 }
-//                                             }
-//                                             tracks.push(track);
-//                                         }
-//                                         Ok(XmlEvent::EndElement { name }) => {
-//                                             if name.local_name != "album" {
-//                                                 panic!(
-//                                                     "Expected end of album, got {}",
-//                                                     name.local_name
-//                                                 );
-//                                             }
-
-//                                             break 'trackloop;
-//                                         }
-//                                         Err(_) => panic!("trackloop error"),
-//                                         _ => panic!("trackloop is different"),
-//                                     }
-//                                 }
-//                                 albums.insert(album, tracks);
-//                             }
-//                             Ok(XmlEvent::EndElement { name }) => {
-//                                 if name.local_name != "artist" {
-//                                     panic!("Artist should've ended");
-//                                 }
-//                                 entries.insert(artist, albums);
-//                                 break 'albumloop;
-//                             }
-//                             Err(e) => panic!("{:?}", e),
-//                             Ok(s) => panic!("{:?} not ok", s),
-//                         }
-//                     }
-//                 }
-//                 Ok(XmlEvent::EndDocument) => {
-//                     break 'root;
-//                 }
-//                 Ok(XmlEvent::StartDocument {
-//                     version: _,
-//                     encoding: _,
-//                     standalone: _,
-//                 }) => (),
-//                 _ => (),
-//                 Err(_) => panic!("Root error!"),
-//             }
-//         }
-
-//         let out = Database {
-//             entries: entries,
-//             file_path: path_str.to_owned(),
-//         };
-
-//         Ok(out)
-//     }
-// }

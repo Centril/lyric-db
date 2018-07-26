@@ -19,14 +19,14 @@ use relm::{Relm, Update, Widget};
 fn create_treestore(db: &Database) -> gtk::TreeStore {
     let out = TreeStore::new(&[String::static_type()]);
 
-    for (artist, albums) in &db.entries {
+    for artist in &db.entries {
         println!("woo, {}", artist);
         let iter = out.insert_with_values(None, None, &[0], &[&artist.name]);
 
-        for (album, tracks) in albums {
+        for album in &artist.albums {
             let iter = out.insert_with_values(Some(&iter), None, &[0], &[&album.title]);
 
-            for track in tracks {
+            for track in &album.tracks {
                 out.insert_with_values(Some(&iter), None, &[0], &[&track.title]);
             }
         }
@@ -115,14 +115,6 @@ impl Widget for Win {
             connect_cursor_changed(_),
             Msg::SelectedItem
         );
-
-        for (k, v) in model.db.entries.iter() {
-            println!("artist: {:?}", k);
-            for (album, tracks) in v.iter() {
-                println!("album: {:?}", album);
-                tracks.iter().for_each(|t| println!("{:?}", t));
-            }
-        }
 
         Win {
             model,
