@@ -21,6 +21,9 @@ impl Database {
             file_path: String::new(),
         }
     }
+    pub fn clean(&mut self) {
+        self.entries.clear();
+    }
     pub fn from(path_str: &str) -> Result<Database, DatabaseError> {
         let mut entries = Vec::new();
 
