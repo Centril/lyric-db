@@ -1,11 +1,8 @@
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
 use std::path::Path;
 
-// use xml::reader::{EventReader, XmlEvent};
-// use xml::ParserConfig;
 use treexml::Document;
 
 pub mod error;
@@ -17,14 +14,13 @@ pub struct Database {
     file_path: String,
 }
 
-// fn read_artist(attrs: Vec<OwnedAttribute>) -> Artist {
-//     for a in attrs {
-//         if a.value == "name" {
-//             return Artist { name: a.value };
-//         }
-//     }
-// }
 impl Database {
+    pub fn empty() -> Database {
+        Database {
+            entries: Vec::new(),
+            file_path: String::new(),
+        }
+    }
     pub fn from(path_str: &str) -> Result<Database, DatabaseError> {
         let mut entries = Vec::new();
 
