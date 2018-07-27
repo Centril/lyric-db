@@ -13,8 +13,8 @@ use database::Database;
 
 use gtk::prelude::*;
 use gtk::{
-    ButtonsType, DialogFlags, FileChooserAction, FileChooserDialog, Label, Menu, MenuBar, MenuItem,
-    MessageDialog, MessageType, Orientation, Paned, TreeStore, TreeView, Window, WindowType,
+    Builder, ButtonsType, DialogFlags, FileChooserAction, FileChooserDialog, Label, MenuItem,
+    MessageDialog, MessageType, TreeStore, TreeView, TreeViewColumn, Window,
 };
 
 use relm::{Relm, Update, Widget};
@@ -52,9 +52,7 @@ struct Win {
     tree_view: TreeView,
     model: Model,
     window: Window,
-    pane: Paned,
     text_viewer: Label,
-    menu_bar: MenuBar,
 }
 
 impl Update for Win {
@@ -132,40 +130,24 @@ impl Widget for Win {
     }
 
     fn view(relm: &Relm<Self>, model: Self::Model) -> Self {
-        //Window and layouts
-        let window = Window::new(WindowType::Toplevel);
-        let pane = Paned::new(Orientation::Horizontal);
-        let g_box = gtk::Box::new(Orientation::Vertical, 1);
+        let glade_src = include_str!("window.glade");
+        let builder = Builder::new_from_string(glade_src);
 
-        let text_viewer = gtk::Label::new("");
-
-        //Setup menu bar
-        let menu = Menu::new();
-        let menu_bar = MenuBar::new();
-        let file = MenuItem::new_with_label("File");
-        let open = MenuItem::new_with_label("Open...");
-
-        menu.append(&open);
-        file.set_submenu(Some(&menu));
-        menu_bar.append(&file);
-        menu_bar.show_all();
+        //Load glade items
+        let window: Window = builder.get_object("window").unwrap();
+        let open: MenuItem = builder.get_object("menu_open").unwrap();
+        let text_viewer = builder.get_object("text_viewer").unwrap();
+        let tree_view: TreeView = builder.get_object("tree_view").unwrap();
+        let col: TreeViewColumn = builder.get_object("view_column").unwrap();
 
         //Setup tree view
-        let col = gtk::TreeViewColumn::new();
         let cell = gtk::CellRendererText::new();
-        let tree_view = gtk::TreeView::new();
         col.pack_start(&cell, true);
         col.add_attribute(&cell, "text", 0);
-        tree_view.append_column(&col);
+        cell.set_property("editable", &true)
+            .expect("failed to set editable");
         tree_view.set_model(Some(&model.tree_store));
 
-        g_box.add(&menu_bar);
-        g_box.add(&pane);
-
-        pane.add1(&tree_view);
-        pane.add2(&text_viewer);
-
-        window.add(&g_box);
         window.show_all();
 
         connect!(
@@ -186,9 +168,7 @@ impl Widget for Win {
             model,
             tree_view,
             window,
-            pane,
             text_viewer,
-            menu_bar,
         }
     }
 }
