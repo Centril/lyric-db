@@ -92,6 +92,7 @@ impl Update for Win {
                         return;
                     }
 
+                    //TODO this leaks memory, fix
                     if let Some(lyrics) = model.get_value(&iter, 1).get::<String>() {
                         self.text_viewer.set_text(&lyrics);
                     } else {
@@ -133,11 +134,21 @@ impl Update for Win {
                 let selection = self.tree_view.get_selection();
                 if let Some((_, iter)) = selection.get_selected() {
                     let model = self.model.tree_store.clone();
+                    //TODO apparently paths need to be freed manually?
                     let path = model.get_path(&iter).expect("Failed to get path");
                     if path.get_depth() < 3 {
                         return;
                     }
-                    model.insert_with_values(Some(&iter), None, &[0], &[&String::new()]);
+                    let iter = model.iter_parent(&iter).unwrap();
+                    model.insert_with_values(
+                        Some(&iter),
+                        None,
+                        &[0, 1],
+                        &[&String::new(), &String::new()],
+                    );
+                    // let iter = model
+                    //     .iter_nth_child(Some(&iter), model.iter_n_children(Some(&iter)))
+                    //     .unwrap();
                 }
             }
             Msg::Quit => gtk::main_quit(),
@@ -198,6 +209,12 @@ impl Widget for Win {
         connect!(relm, add_menu_artist, connect_activate(_), Msg::AddArtist);
         connect!(relm, add_menu_album, connect_activate(_), Msg::AddAlbum);
         connect!(relm, add_menu_track, connect_activate(_), Msg::AddTrack);
+
+        let model1 = model.tree_store.clone();
+        cell_name.connect_edited(move |_, path, string| {
+            let iter = model1.get_iter(&path).unwrap();
+            model1.set(&iter, &[0], &[&string.to_owned()]);
+        });
 
         Win {
             model,
