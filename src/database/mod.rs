@@ -3,7 +3,7 @@ use std::io::BufReader;
 use std::io::Read;
 use std::path::Path;
 
-use treexml::Document;
+use treexml::{Document, Element};
 
 pub mod error;
 pub mod metadata;
@@ -114,5 +114,44 @@ impl Database {
             entries: entries,
             file_path: path_str.to_owned(),
         })
+    }
+
+    pub fn save(&self, path: &str) -> Result<(), DatabaseError> {
+        let mut root = Element::new("database");
+        for artist in &self.entries {
+            let mut artist_el = Element::new("artist");
+            artist_el
+                .attributes
+                .insert("name".to_owned(), artist.name.clone());
+            for album in &artist.albums {
+                let mut album_el = Element::new("album");
+                album_el
+                    .attributes
+                    .insert("title".to_owned(), album.title.clone());
+                album_el
+                    .attributes
+                    .insert("tracks".to_owned(), album.track_count.to_string());
+
+                for track in &album.tracks {
+                    let mut track_el = Element::new("track");
+                    track_el
+                        .attributes
+                        .insert("num".to_owned(), track.track.to_string());
+                    track_el
+                        .attributes
+                        .insert("name".to_owned(), track.title.to_string());
+                    track_el.text = Some(track.lyrics.clone());
+                    album_el.children.push(track_el);
+                }
+                artist_el.children.push(album_el);
+            }
+            root.children.push(artist_el);
+        }
+        let doc = Document {
+            root: Some(root),
+            ..Document::default()
+        };
+        println!("{}", doc);
+        Ok(())
     }
 }

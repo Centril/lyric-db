@@ -123,6 +123,7 @@ impl Update for Win {
                         dialog.run();
                     } else {
                         self.model.db = Database::from(file.to_str().unwrap()).unwrap();
+                        self.model.db.save("").unwrap();
                         update_treestore(&mut self.model.db, &self.model.tree_store);
                     }
                 }
