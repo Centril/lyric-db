@@ -1,14 +1,16 @@
 use gtk::prelude::*;
 use gtk::{
-    Builder, ButtonsType, DialogFlags, FileChooserAction, FileChooserDialog, Label, MenuItem,
-    MessageDialog, MessageType, TreeStore, TreeView, TreeViewColumn, Window,
+    Builder, Button, ButtonsType, DialogFlags, FileChooserAction, FileChooserDialog, Label, Menu,
+    MenuItem, MessageDialog, MessageType, TreeStore, TreeView, TreeViewColumn, Window,
 };
 
-use relm::{Relm, Update, Widget};
+use relm::{init, Component, Relm, Update, Widget};
 
 use std::path::Path;
 
 use database::Database;
+
+use albumwindow::AlbumWindow;
 
 fn update_treestore(db: &mut Database, input: &TreeStore) {
     input.clear();
@@ -36,8 +38,7 @@ pub enum Msg {
     SelectedItem,
     MenuOpen,
     AddArtist,
-    AddAlbum,
-    AddTrack,
+    EditEntry,
     Quit,
 }
 
@@ -51,6 +52,8 @@ pub struct MainWindow {
     model: Model,
     window: Window,
     text_viewer: Label,
+    albumwin: Option<Component<AlbumWindow>>,
+    context_menu: Menu,
 }
 
 impl Update for MainWindow {
@@ -112,34 +115,21 @@ impl Update for MainWindow {
                         dialog.run();
                     } else {
                         self.model.db = Database::from(file.to_str().unwrap()).unwrap();
-                        self.model.db.save("").unwrap();
+                        // self.model.db.save("").unwrap();
                         update_treestore(&mut self.model.db, &self.model.tree_store);
                     }
                 }
                 dialog.destroy();
             }
-            Msg::AddArtist => println!("todo too"),
-            Msg::AddAlbum => println!("todo"),
-            Msg::AddTrack => {
-                let selection = self.tree_view.get_selection();
-                if let Some((_, iter)) = selection.get_selected() {
-                    let model = self.model.tree_store.clone();
-                    //TODO apparently paths need to be freed manually?
-                    let path = model.get_path(&iter).expect("Failed to get path");
-                    if path.get_depth() < 3 {
-                        return;
-                    }
-                    let iter = model.iter_parent(&iter).unwrap();
-                    model.insert_with_values(
-                        Some(&iter),
-                        None,
-                        &[0, 1],
-                        &[&String::new(), &String::new()],
-                    );
-                    // let iter = model
-                    //     .iter_nth_child(Some(&iter), model.iter_n_children(Some(&iter)))
-                    //     .unwrap();
-                }
+            Msg::AddArtist => {
+                //TODO: pop up dialog to ask for name
+                self.model
+                    .tree_store
+                    .insert_with_values(None, None, &[0], &[&String::new()]);
+            }
+            Msg::EditEntry => {
+                //TODO
+                self.albumwin = Some(init::<AlbumWindow>(()).expect("album window"));
             }
             Msg::Quit => gtk::main_quit(),
         }
@@ -163,9 +153,11 @@ impl Widget for MainWindow {
         let tree_view: TreeView = builder.get_object("tree_view").unwrap();
         let col_name: TreeViewColumn = builder.get_object("view_column").unwrap();
         let col_lyrics: TreeViewColumn = builder.get_object("lyric_column").unwrap();
-        let add_menu_artist: MenuItem = builder.get_object("add_menu_artist").unwrap();
-        let add_menu_album: MenuItem = builder.get_object("add_menu_album").unwrap();
-        let add_menu_track: MenuItem = builder.get_object("add_menu_track").unwrap();
+        let button_add_artist: Button = builder.get_object("button_add_artist").unwrap();
+
+        //Context menu
+        let context_menu: Menu = builder.get_object("context_menu").unwrap();
+        let context_edit: MenuItem = builder.get_object("context_menu_edit").unwrap();
 
         //Setup tree view
         let cell_name = gtk::CellRendererText::new();
@@ -196,10 +188,17 @@ impl Widget for MainWindow {
             Msg::SelectedItem
         );
         connect!(relm, open, connect_activate(_), Msg::MenuOpen);
-        connect!(relm, add_menu_artist, connect_activate(_), Msg::AddArtist);
-        connect!(relm, add_menu_album, connect_activate(_), Msg::AddAlbum);
-        connect!(relm, add_menu_track, connect_activate(_), Msg::AddTrack);
+        connect!(relm, button_add_artist, connect_activate(_), Msg::AddArtist);
+        connect!(relm, context_edit, connect_activate(_), Msg::EditEntry);
 
+        //Connections that cant be done with relm
+        let con_menu = context_menu.clone();
+        tree_view.connect_button_press_event(move |view, event| {
+            if view.get_selection().get_selected().is_some() && event.get_button() == 3 {
+                con_menu.popup_easy(event.get_button(), event.get_time());
+            }
+            Inhibit(false)
+        });
         let model1 = model.tree_store.clone();
         cell_name.connect_edited(move |_, path, string| {
             let iter = model1.get_iter(&path).unwrap();
@@ -211,6 +210,8 @@ impl Widget for MainWindow {
             tree_view,
             window,
             text_viewer,
+            context_menu,
+            albumwin: None,
         }
     }
 }

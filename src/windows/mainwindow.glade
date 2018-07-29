@@ -2,30 +2,14 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <object class="GtkMenu" id="menu_add_entry">
+  <object class="GtkMenu" id="context_menu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
-      <object class="GtkMenuItem" id="add_menu_artist">
+      <object class="GtkMenuItem" id="context_menu_edit">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Artist</property>
-        <property name="use_underline">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="add_menu_album">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Album</property>
-        <property name="use_underline">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="add_menu_track">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Track</property>
+        <property name="label" translatable="yes">Edit...</property>
         <property name="use_underline">True</property>
       </object>
     </child>
@@ -34,6 +18,9 @@
     <property name="can_focus">False</property>
     <property name="default_width">500</property>
     <property name="default_height">600</property>
+    <child>
+      <placeholder/>
+    </child>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
@@ -116,15 +103,11 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuButton" id="menubutton_add_entry">
+                      <object class="GtkButton" id="button_add_artist">
+                        <property name="label" translatable="yes">Add Artist</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
-                        <property name="popup">menu_add_entry</property>
-                        <property name="use_popover">False</property>
-                        <child>
-                          <placeholder/>
-                        </child>
                       </object>
                       <packing>
                         <property name="expand">False</property>
