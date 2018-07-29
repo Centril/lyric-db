@@ -1,0 +1,3 @@
+* Plans
+  - Seperate windows for adding and editing artist's data(albums, tracks)
+  - Only have the ability to add an artist on the main window, not editing

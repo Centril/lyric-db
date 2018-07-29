@@ -1,0 +1,1 @@
+seperare editing windows per artist, allowing you to edit them in a seperate window and shiet
