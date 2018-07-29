@@ -38,7 +38,7 @@ pub enum Msg {
     SelectedItem,
     MenuOpen,
     AddArtist,
-    EditEntry,
+    EditAlbum,
     Quit,
 }
 
@@ -127,9 +127,26 @@ impl Update for MainWindow {
                     .tree_store
                     .insert_with_values(None, None, &[0], &[&String::new()]);
             }
-            Msg::EditEntry => {
-                //TODO
-                self.albumwin = Some(init::<AlbumWindow>(()).expect("album window"));
+            Msg::EditAlbum => {
+                //Pass album and track data to the editing window
+                let (model, iter) = self.tree_view.get_selection().get_selected().unwrap();
+                let title = model.get_value(&iter, 0).get::<String>().unwrap();
+
+                let iter = model.iter_children(Some(&iter)).unwrap();
+                let mut tracks = Vec::new();
+                loop {
+                    let entry = (
+                        model.get_value(&iter, 0).get::<String>().unwrap(),
+                        model.get_value(&iter, 1).get::<String>().unwrap(),
+                    );
+
+                    tracks.push(entry);
+                    if !model.iter_next(&iter) {
+                        break;
+                    }
+                }
+
+                self.albumwin = Some(init::<AlbumWindow>((title, tracks)).expect("album window"));
             }
             Msg::Quit => gtk::main_quit(),
         }
@@ -189,13 +206,19 @@ impl Widget for MainWindow {
         );
         connect!(relm, open, connect_activate(_), Msg::MenuOpen);
         connect!(relm, button_add_artist, connect_activate(_), Msg::AddArtist);
-        connect!(relm, context_edit, connect_activate(_), Msg::EditEntry);
+        connect!(relm, context_edit, connect_activate(_), Msg::EditAlbum);
 
         //Connections that cant be done with relm
+
+        //Only open context menu on editable entries(albums and TODO artists)
         let con_menu = context_menu.clone();
         tree_view.connect_button_press_event(move |view, event| {
-            if view.get_selection().get_selected().is_some() && event.get_button() == 3 {
-                con_menu.popup_easy(event.get_button(), event.get_time());
+            if event.get_button() == 3 {
+                if let Some((model, iter)) = view.get_selection().get_selected() {
+                    if model.get_path(&iter).unwrap().get_depth() == 2 {
+                        con_menu.popup_easy(event.get_button(), event.get_time());
+                    }
+                }
             }
             Inhibit(false)
         });
