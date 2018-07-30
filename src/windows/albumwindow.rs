@@ -1,13 +1,14 @@
 use gtk::prelude::*;
 use gtk::{
-    Builder, Entry, EntryBuffer, Label, ListBox, ListBoxRow, ListStore, Orientation, Window,
-    WindowType,
+    Builder, Entry, EntryBuffer, Label, ListBox, ListBoxRow, ListStore, Orientation, TextBuffer,
+    TextView, Window, WindowType,
 };
 
 use relm::{Relm, Update, Widget};
 
 #[derive(Msg)]
 pub enum Msg {
+    SelectedTrack,
     Quit,
 }
 
@@ -18,14 +19,16 @@ pub struct Model {
 
 pub struct AlbumWindow {
     window: Window,
+    model: Model,
+    lyrics_view: TextView,
+    track_list_box: ListBox,
 }
 
 struct TrackEntry {
     container: gtk::Box,
     title: EntryBuffer,
-    lyrics: EntryBuffer,
+    lyrics_buffer: TextBuffer,
     title_entry: Entry,
-    lyrics_entry: Entry,
     num: u32,
     num_label: Label,
 }
@@ -37,22 +40,21 @@ impl TrackEntry {
         //Setup buffers
         let title_buffer = EntryBuffer::new(Some(title.as_str()));
         let title_entry = Entry::new_with_buffer(&title_buffer);
-        let lyrics_buffer = EntryBuffer::new(Some(lyrics.as_str()));
-        let lyrics_entry = Entry::new_with_buffer(&lyrics_buffer);
 
         let container = gtk::Box::new(Orientation::Horizontal, 0);
-        container.pack_end(&num_label, false, false, 0);
-        container.pack_end(&title_entry, true, true, 0);
-        container.pack_end(&lyrics_entry, true, true, 0);
+        container.pack_start(&num_label, false, false, 0);
+        container.pack_start(&title_entry, true, true, 0);
+
+        let lyrics_buffer = gtk::TextBuffer::new(None);
+        lyrics_buffer.insert_at_cursor(lyrics.as_str());
 
         TrackEntry {
             container,
             title: title_buffer,
-            lyrics: lyrics_buffer,
-            lyrics_entry,
             title_entry,
             num: entry,
             num_label,
+            lyrics_buffer,
         }
     }
 }
@@ -80,6 +82,12 @@ impl Update for AlbumWindow {
 
     fn update(&mut self, event: Msg) {
         match event {
+            Msg::SelectedTrack => {
+                let row = self.track_list_box.get_selected_row().unwrap();
+                self.lyrics_view.set_buffer(Some(
+                    &self.model.entries[row.get_index() as usize].lyrics_buffer,
+                ));
+            }
             Msg::Quit => {
                 self.window.destroy();
             }
@@ -109,6 +117,8 @@ impl Widget for AlbumWindow {
             track_list_box.add(&row);
         }
 
+        let lyrics_view: TextView = builder.get_object("lyrics_view").unwrap();
+
         window.show_all();
 
         connect!(
@@ -117,6 +127,18 @@ impl Widget for AlbumWindow {
             connect_delete_event(_, _),
             return (Msg::Quit, Inhibit(false))
         );
-        AlbumWindow { window }
+
+        connect!(
+            relm,
+            track_list_box,
+            connect_row_selected(_, _),
+            Msg::SelectedTrack
+        );
+        AlbumWindow {
+            window,
+            model,
+            lyrics_view,
+            track_list_box,
+        }
     }
 }
