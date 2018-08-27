@@ -164,26 +164,26 @@ impl Widget for MainWindow {
         let builder = Builder::new_from_string(glade_src);
 
         //Load glade items
-        let window: Window = builder.get_object("window").unwrap();
-        let open: MenuItem = builder.get_object("menu_open").unwrap();
-        let text_viewer = builder.get_object("text_viewer").unwrap();
-        let tree_view: TreeView = builder.get_object("tree_view").unwrap();
-        let col_name: TreeViewColumn = builder.get_object("view_column").unwrap();
-        let col_lyrics: TreeViewColumn = builder.get_object("lyric_column").unwrap();
-        let button_add_artist: Button = builder.get_object("button_add_artist").unwrap();
+        get_object!(window, Window, builder);
+        get_object!(menu_open, MenuItem, builder);
+        get_object!(text_viewer, Label, builder);
+        get_object!(tree_view, TreeView, builder);
+        get_object!(button_add_artist, Button, builder);
+        get_object!(view_column, TreeViewColumn, builder);
+        get_object!(lyric_column, TreeViewColumn, builder);
 
         //Context menu
-        let context_menu: Menu = builder.get_object("context_menu").unwrap();
-        let context_edit: MenuItem = builder.get_object("context_menu_edit").unwrap();
+        get_object!(context_menu, Menu, builder);
+        get_object!(context_menu_edit, MenuItem, builder);
 
         //Setup tree view
         let cell_name = gtk::CellRendererText::new();
-        col_name.pack_start(&cell_name, true);
-        col_name.add_attribute(&cell_name, "text", 0);
+        view_column.pack_start(&cell_name, true);
+        view_column.add_attribute(&cell_name, "text", 0);
 
         let cell_lyrics = gtk::CellRendererText::new();
-        col_lyrics.pack_start(&cell_lyrics, true);
-        col_lyrics.add_attribute(&cell_lyrics, "text", 0);
+        lyric_column.pack_start(&cell_lyrics, true);
+        lyric_column.add_attribute(&cell_lyrics, "text", 0);
 
         cell_name
             .set_property("editable", &true)
@@ -204,9 +204,9 @@ impl Widget for MainWindow {
             connect_cursor_changed(_),
             Msg::SelectedItem
         );
-        connect!(relm, open, connect_activate(_), Msg::MenuOpen);
+        connect!(relm, menu_open, connect_activate(_), Msg::MenuOpen);
         connect!(relm, button_add_artist, connect_activate(_), Msg::AddArtist);
-        connect!(relm, context_edit, connect_activate(_), Msg::EditAlbum);
+        connect!(relm, context_menu_edit, connect_activate(_), Msg::EditAlbum);
 
         //Connections that cant be done with relm
 

@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use gtk::{
-    Builder, Entry, EntryBuffer, Label, ListBox, ListBoxRow, ListStore, Orientation, TextBuffer,
-    TextView, Window, WindowType,
+    Builder, Entry, EntryBuffer, Label, ListBox, ListBoxRow, Orientation, TextBuffer, TextView,
+    Window,
 };
 
 use relm::{Relm, Update, Widget};
@@ -34,11 +34,11 @@ struct TrackEntry {
 }
 
 impl TrackEntry {
-    pub fn new_from_data(title: String, lyrics: String, entry: u32) -> TrackEntry {
+    pub fn new_from_data(title: &str, lyrics: &str, entry: u32) -> TrackEntry {
         let num_label = Label::new(Some(entry.to_string().as_str()));
 
         //Setup buffers
-        let title_buffer = EntryBuffer::new(Some(title.as_str()));
+        let title_buffer = EntryBuffer::new(Some(title));
         let title_entry = Entry::new_with_buffer(&title_buffer);
 
         let container = gtk::Box::new(Orientation::Horizontal, 0);
@@ -46,7 +46,7 @@ impl TrackEntry {
         container.pack_start(&title_entry, true, true, 0);
 
         let lyrics_buffer = gtk::TextBuffer::new(None);
-        lyrics_buffer.insert_at_cursor(lyrics.as_str());
+        lyrics_buffer.insert_at_cursor(lyrics);
 
         TrackEntry {
             container,
@@ -68,10 +68,8 @@ impl Update for AlbumWindow {
         let mut entries = Vec::new();
         let album_buffer = EntryBuffer::new(Some(title.as_str()));
 
-        let mut i = 0;
-        for (title, lyrics) in tracks {
-            entries.push(TrackEntry::new_from_data(title, lyrics, i));
-            i += 1;
+        for (i, (title, lyrics)) in tracks.iter().enumerate() {
+            entries.push(TrackEntry::new_from_data(title, lyrics, i as u32));
         }
 
         Model {
@@ -105,19 +103,20 @@ impl Widget for AlbumWindow {
         let glade_src = include_str!("albumwindow.glade");
         let builder = Builder::new_from_string(glade_src);
 
-        let window: Window = builder.get_object("window").unwrap();
+        get_object!(window, Window, builder);
 
-        let album_entry: Entry = builder.get_object("album_entry").unwrap();
+        get_object!(album_entry, Entry, builder);
         album_entry.set_buffer(&model.album_buffer);
 
-        let track_list_box: ListBox = builder.get_object("track_list_box").unwrap();
+        get_object!(track_list_box, ListBox, builder);
+
         for entry in &model.entries {
             let row = ListBoxRow::new();
             row.add(&entry.container);
             track_list_box.add(&row);
         }
 
-        let lyrics_view: TextView = builder.get_object("lyrics_view").unwrap();
+        get_object!(lyrics_view, TextView, builder);
 
         window.show_all();
 

@@ -111,7 +111,7 @@ impl Database {
         }
 
         Ok(Database {
-            entries: entries,
+            entries,
             file_path: path_str.to_owned(),
         })
     }
